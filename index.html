@@ -1,24 +1,695 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>سایت من</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background: #0d1117;
-      color: #fff;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>شطرنج با هوش مصنوعی</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: Tahoma, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: #eee;
+  }
+  h1 {
+    margin-bottom: 15px;
+    font-size: 1.8rem;
+    background: linear-gradient(90deg, #f0d9b5, #b58863);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .container {
+    display: flex;
+    gap: 25px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  #board {
+    display: grid;
+    grid-template-columns: repeat(8, 70px);
+    grid-template-rows: repeat(8, 70px);
+    border: 6px solid #4a3728;
+    border-radius: 8px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+    overflow: hidden;
+  }
+  .square {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 46px;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    transition: background 0.15s;
+  }
+  .light { background: #f0d9b5; }
+  .dark  { background: #b58863; }
+  .square.selected { box-shadow: inset 0 0 0 4px #f7d51d; }
+  .square.legal::after {
+    content: '';
+    position: absolute;
+    width: 22px; height: 22px;
+    background: rgba(0,0,0,0.28);
+    border-radius: 50%;
+  }
+  .square.legal.capture::after {
+    width: 100%; height: 100%;
+    background: transparent;
+    border: 4px solid rgba(200,0,0,0.55);
+    border-radius: 50%;
+    box-sizing: border-box;
+  }
+  .square.last-move { background: rgba(247,213,29,0.45) !important; }
+  .square.check { background: radial-gradient(circle, #ff4444 0%, transparent 70%) !important; }
+  .piece { pointer-events: none; line-height: 1; }
+  .panel {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 20px;
+    min-width: 260px;
+    backdrop-filter: blur(10px);
+  }
+  .status {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(0,0,0,0.3);
+    text-align: center;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .status.thinking { color: #f7d51d; }
+  .status.checkmate { color: #ff5555; font-weight: bold; }
+  .status.win { color: #55ff88; font-weight: bold; }
+  .controls { display: flex; flex-direction: column; gap: 10px; }
+  button {
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102,126,234,0.4); }
+  button:active { transform: translateY(0); }
+  button.danger { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+  .level-select {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .level-select button {
+    flex: 1;
+    padding: 8px;
+    font-size: 0.85rem;
+    background: rgba(255,255,255,0.1);
+  }
+  .level-select button.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+  }
+  .info {
+    margin-top: 12px;
+    font-size: 0.85rem;
+    color: #aaa;
+    text-align: center;
+    line-height: 1.8;
+  }
+  .captured {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    min-height: 30px;
+    font-size: 24px;
+    margin: 8px 0;
+    padding: 6px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 6px;
+  }
+  @media (max-width: 700px) {
+    #board {
+      grid-template-columns: repeat(8, 40px);
+      grid-template-rows: repeat(8, 40px);
     }
-    h1 { font-size: 2rem; }
-  </style>
+    .square { font-size: 26px; }
+    .square.legal::after { width: 14px; height: 14px; }
+  }
+</style>
 </head>
 <body>
-  <h1>🎉 سلام دنیا! سایت من روی GitHub Pages کار می‌کنه</h1>
-</body>
-</html>
+
+<h1>♟️ شطرنج با هوش مصنوعی</h1>
+
+<div class="container">
+  <div id="board"></div>
+
+  <div class="panel">
+    <div class="status" id="status">نوبت شماست (سفید)</div>
+
+    <div class="level-select">
+      <button data-level="1">آسان</button>
+      <button data-level="2" class="active">متوسط</button>
+      <button data-level="3">سخت</button>
+    </div>
+
+    <div class="captured" id="capturedBlack"></div>
+    <div class="captured" id="capturedWhite"></div>
+
+    <div class="controls">
+      <button id="newGame">🔄 بازی جدید</button>
+      <button id="undo" class="danger">↩️ برگردوندن حرکت</button>
+    </div>
+
+    <div class="info">
+      حرکت با کلیک روی مهره و بعد مقصد<br>
+      مهره‌های سیاه = کامپیوتر
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   موتور شطرنج کامل با هوش مصنوعی (Minimax + Alpha-Beta)
+   همه چیز در یک فایل
+   ============================================================ */
+
+const PIECES = {
+  'K':'♔','Q':'♕','R':'♖','B':'♗','N':'♘','P':'♙',
+  'k':'♚','q':'♛','r':'♜','b':'♝','n':'♞','p':'♟'
+};
+
+const PIECE_VALUES = { p:100, n:320, b:330, r:500, q:900, k:20000 };
+
+// تخته اولیه
+function initialBoard() {
+  return [
+    ['r','n','b','q','k','b','n','r'],
+    ['p','p','p','p','p','p','p','p'],
+    [null,null,null,null,null,null,null,null],
+    [null,null,null,null,null,null,null,null],
+    [null,null,null,null,null,null,null,null],
+    [null,null,null,null,null,null,null,null],
+    ['P','P','P','P','P','P','P','P'],
+    ['R','N','B','Q','K','B','N','R']
+  ];
+}
+
+function isWhite(p) { return p && p === p.toUpperCase(); }
+function isBlack(p) { return p && p === p.toLowerCase(); }
+function colorOf(p) { return isWhite(p) ? 'w' : 'b'; }
+function inBounds(r,c) { return r>=0 && r<8 && c>=0 && c<8; }
+
+// وضعیت بازی
+let board, turn, selected, legalMoves, history, gameOver, enPassant, castling, aiThinking;
+
+function resetGame() {
+  board = initialBoard();
+  turn = 'w';
+  selected = null;
+  legalMoves = [];
+  history = [];
+  gameOver = false;
+  enPassant = null;
+  castling = { wK:true, wQ:true, bK:true, bQ:true };
+  aiThinking = false;
+  render();
+  setStatus('نوبت شماست (سفید)', '');
+}
+
+// پیدا کردن شاه
+function findKing(b, color) {
+  const target = color === 'w' ? 'K' : 'k';
+  for (let r=0;r<8;r++) for (let c=0;c<8;c++) if (b[r][c] === target) return [r,c];
+  return null;
+}
+
+// بررسی حمله به خانه
+function isAttacked(b, r, c, byColor) {
+  // سرباز
+  const dir = byColor === 'w' ? 1 : -1;
+  for (const dc of [-1,1]) {
+    const rr = r + dir, cc = c + dc;
+    if (inBounds(rr,cc)) {
+      const p = b[rr][cc];
+      if (p && colorOf(p) === byColor && p.toLowerCase() === 'p') return true;
+    }
+  }
+  // اسب
+  const knightMoves = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+  for (const [dr,dc] of knightMoves) {
+    const rr=r+dr, cc=c+dc;
+    if (inBounds(rr,cc)) {
+      const p = b[rr][cc];
+      if (p && colorOf(p) === byColor && p.toLowerCase() === 'n') return true;
+    }
+  }
+  // شاه
+  for (let dr=-1;dr<=1;dr++) for (let dc=-1;dc<=1;dc++) {
+    if (!dr && !dc) continue;
+    const rr=r+dr, cc=c+dc;
+    if (inBounds(rr,cc)) {
+      const p = b[rr][cc];
+      if (p && colorOf(p) === byColor && p.toLowerCase() === 'k') return true;
+    }
+  }
+  // اسلاید (رخ، فیل، وزیر)
+  const dirs = [
+    [-1,0,'r'],[1,0,'r'],[0,-1,'r'],[0,1,'r'],
+    [-1,-1,'b'],[-1,1,'b'],[1,-1,'b'],[1,1,'b']
+  ];
+  for (const [dr,dc,type] of dirs) {
+    let rr=r+dr, cc=c+dc;
+    while (inBounds(rr,cc)) {
+      const p = b[rr][cc];
+      if (p) {
+        if (colorOf(p) === byColor) {
+          const t = p.toLowerCase();
+          if (t === 'q' || t === type) return true;
+        }
+        break;
+      }
+      rr+=dr; cc+=dc;
+    }
+  }
+  return false;
+}
+
+function isInCheck(b, color) {
+  const k = findKing(b, color);
+  if (!k) return false;
+  return isAttacked(b, k[0], k[1], color === 'w' ? 'b' : 'w');
+}
+
+// تولید حرکات مهره
+function pieceMoves(b, r, c, ep, cast) {
+  const p = b[r][c];
+  if (!p) return [];
+  const color = colorOf(p);
+  const type = p.toLowerCase();
+  const moves = [];
+  const enemy = color === 'w' ? 'b' : 'w';
+
+  const add = (rr,cc, extra={}) => {
+    if (!inBounds(rr,cc)) return false;
+    const target = b[rr][cc];
+    if (target && colorOf(target) === color) return false;
+    moves.push({ from:[r,c], to:[rr,cc], ...extra });
+    return !target;
+  };
+
+  if (type === 'p') {
+    const dir = color === 'w' ? -1 : 1;
+    const startRow = color === 'w' ? 6 : 1;
+    const promoRow = color === 'w' ? 0 : 7;
+
+    // یک خانه جلو
+    if (inBounds(r+dir,c) && !b[r+dir][c]) {
+      if (r+dir === promoRow) {
+        for (const pr of ['q','r','b','n']) moves.push({ from:[r,c], to:[r+dir,c], promo: pr });
+      } else {
+        moves.push({ from:[r,c], to:[r+dir,c] });
+      }
+      // دو خانه
+      if (r === startRow && !b[r+2*dir][c]) {
+        moves.push({ from:[r,c], to:[r+2*dir,c], double: true });
+      }
+    }
+    // گرفتن
+    for (const dc of [-1,1]) {
+      const rr=r+dir, cc=c+dc;
+      if (!inBounds(rr,cc)) continue;
+      const target = b[rr][cc];
+      if (target && colorOf(target) === enemy) {
+        if (rr === promoRow) {
+          for (const pr of ['q','r','b','n']) moves.push({ from:[r,c], to:[rr,cc], promo: pr });
+        } else {
+          moves.push({ from:[r,c], to:[rr,cc] });
+        }
+      } else if (!target && ep && ep[0] === rr && ep[1] === cc) {
+        moves.push({ from:[r,c], to:[rr,cc], enPassant: true });
+      }
+    }
+  } else if (type === 'n') {
+    const km = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+    for (const [dr,dc] of km) add(r+dr, c+dc);
+  } else if (type === 'k') {
+    for (let dr=-1;dr<=1;dr++) for (let dc=-1;dc<=1;dc++) {
+      if (!dr && !dc) continue;
+      add(r+dr, c+dc);
+    }
+    // قلعه
+    if (cast) {
+      const homeRow = color === 'w' ? 7 : 0;
+      if (r === homeRow && c === 4) {
+        // قلعه کوتاه
+        const canK = color === 'w' ? cast.wK : cast.bK;
+        if (canK && !b[homeRow][5] && !b[homeRow][6] && b[homeRow][7] && b[homeRow][7].toLowerCase() === 'r') {
+          if (!isAttacked(b, homeRow, 4, enemy) && !isAttacked(b, homeRow, 5, enemy) && !isAttacked(b, homeRow, 6, enemy)) {
+            moves.push({ from:[r,c], to:[homeRow,6], castle: 'K' });
+          }
+        }
+        // قلعه بلند
+        const canQ = color === 'w' ? cast.wQ : cast.bQ;
+        if (canQ && !b[homeRow][3] && !b[homeRow][2] && !b[homeRow][1] && b[homeRow][0] && b[homeRow][0].toLowerCase() === 'r') {
+          if (!isAttacked(b, homeRow, 4, enemy) && !isAttacked(b, homeRow, 3, enemy) && !isAttacked(b, homeRow, 2, enemy)) {
+            moves.push({ from:[r,c], to:[homeRow,2], castle: 'Q' });
+          }
+        }
+      }
+    }
+  } else {
+    let dirs = [];
+    if (type === 'r') dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+    if (type === 'b') dirs = [[-1,-1],[-1,1],[1,-1],[1,1]];
+    if (type === 'q') dirs = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+    for (const [dr,dc] of dirs) {
+      let rr=r+dr, cc=c+dc;
+      while (add(rr,cc)) { rr+=dr; cc+=dc; }
+    }
+  }
+  return moves;
+}
+
+// همه حرکات مجاز برای یک رنگ (با بررسی کیش)
+function allLegalMoves(b, color, ep, cast) {
+  const moves = [];
+  for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+    const p = b[r][c];
+    if (p && colorOf(p) === color) {
+      const pm = pieceMoves(b, r, c, ep, cast);
+      for (const m of pm) {
+        const nb = applyMove(b, m);
+        if (!isInCheck(nb, color)) moves.push(m);
+      }
+    }
+  }
+  return moves;
+}
+
+// اعمال حرکت روی تخته (کپی)
+function applyMove(b, move) {
+  const nb = b.map(row => row.slice());
+  const [fr,fc] = move.from;
+  const [tr,tc] = move.to;
+  const piece = nb[fr][fc];
+  nb[tr][tc] = piece;
+  nb[fr][fc] = null;
+  // آنپاسان
+  if (move.enPassant) {
+    const capRow = colorOf(piece) === 'w' ? tr+1 : tr-1;
+    nb[capRow][tc] = null;
+  }
+  // ارتقا
+  if (move.promo) {
+    nb[tr][tc] = colorOf(piece) === 'w' ? move.promo.toUpperCase() : move.promo;
+  }
+  // قلعه
+  if (move.castle === 'K') {
+    const row = tr;
+    nb[row][5] = nb[row][7];
+    nb[row][7] = null;
+  } else if (move.castle === 'Q') {
+    const row = tr;
+    nb[row][3] = nb[row][0];
+    nb[row][0] = null;
+  }
+  return nb;
+}
+
+// ارزیابی موقعیت
+function evaluate(b) {
+  let score = 0;
+  for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+    const p = b[r][c];
+    if (!p) continue;
+    const v = PIECE_VALUES[p.toLowerCase()];
+    // پاداش مرکز
+    const centerBonus = (3.5 - Math.abs(r-3.5)) + (3.5 - Math.abs(c-3.5));
+    const posBonus = centerBonus * 2;
+    if (isWhite(p)) score += v + posBonus;
+    else score -= v + posBonus;
+  }
+  return score;
+}
+
+// Minimax با Alpha-Beta
+function minimax(b, depth, alpha, beta, maximizing, ep, cast) {
+  if (depth === 0) return evaluate(b);
+
+  const color = maximizing ? 'w' : 'b';
+  const moves = allLegalMoves(b, color, ep, cast);
+
+  if (moves.length === 0) {
+    if (isInCheck(b, color)) return maximizing ? -99999 : 99999;
+    return 0;
+  }
+
+  if (maximizing) {
+    let best = -Infinity;
+    for (const m of moves) {
+      const nb = applyMove(b, m);
+      // شبیه‌سازی ساده قلعه/آنپاسان برای هوش مصنوعی
+      const newEp = m.double ? [(m.from[0]+m.to[0])/2, m.from[1]] : null;
+      const val = minimax(nb, depth-1, alpha, beta, false, newEp, cast);
+      if (val > best) best = val;
+      if (val > alpha) alpha = val;
+      if (beta <= alpha) break;
+    }
+    return best;
+  } else {
+    let best = Infinity;
+    for (const m of moves) {
+      const nb = applyMove(b, m);
+      const newEp = m.double ? [(m.from[0]+m.to[0])/2, m.from[1]] : null;
+      const val = minimax(nb, depth-1, alpha, beta, true, newEp, cast);
+      if (val < best) best = val;
+      if (val < beta) beta = val;
+      if (beta <= alpha) break;
+    }
+    return best;
+  }
+}
+
+// انتخاب بهترین حرکت برای AI
+function bestMove(depth) {
+  const color = 'b';
+  const moves = allLegalMoves(board, color, enPassant, castling);
+  if (moves.length === 0) return null;
+
+  let best = null;
+  let bestVal = Infinity;
+  let alpha = -Infinity, beta = Infinity;
+
+  // ترتیب: اول گرفتن‌ها
+  moves.sort((a,b) => {
+    const ca = board[a.to[0]][a.to[1]] ? 1 : 0;
+    const cb = board[b.to[0]][b.to[1]] ? 1 : 0;
+    return cb - ca;
+  });
+
+  for (const m of moves) {
+    const nb = applyMove(board, m);
+    const newEp = m.double ? [(m.from[0]+m.to[0])/2, m.from[1]] : null;
+    const val = minimax(nb, depth-1, alpha, beta, true, newEp, castling);
+    if (val < bestVal) { bestVal = val; best = m; }
+    if (val < beta) beta = val;
+  }
+  return best;
+}
+
+// رندر
+const boardEl = document.getElementById('board');
+
+function render() {
+  boardEl.innerHTML = '';
+  const kingInCheck = isInCheck(board, turn) ? findKing(board, turn) : null;
+
+  for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+    const sq = document.createElement('div');
+    sq.className = 'square ' + ((r+c)%2 === 0 ? 'light' : 'dark');
+    sq.dataset.r = r; sq.dataset.c = c;
+
+    if (selected && selected[0]===r && selected[1]===c) sq.classList.add('selected');
+
+    const lm = legalMoves.find(m => m.to[0]===r && m.to[1]===c);
+    if (lm) {
+      sq.classList.add('legal');
+      if (board[r][c] || lm.enPassant) sq.classList.add('capture');
+    }
+
+    // آخرین حرکت
+    if (history.length) {
+      const last = history[history.length-1];
+      if ((last.from[0]===r && last.from[1]===c) || (last.to[0]===r && last.to[1]===c)) {
+        sq.classList.add('last-move');
+      }
+    }
+
+    if (kingInCheck && kingInCheck[0]===r && kingInCheck[1]===c) sq.classList.add('check');
+
+    const p = board[r][c];
+    if (p) {
+      const span = document.createElement('span');
+      span.className = 'piece';
+      span.textContent = PIECES[p];
+      span.style.color = isWhite(p) ? '#fff' : '#111';
+      span.style.textShadow = isWhite(p) ? '0 0 2px #000' : '0 0 2px #fff';
+      sq.appendChild(span);
+    }
+
+    sq.addEventListener('click', () => onSquareClick(r,c));
+    boardEl.appendChild(sq);
+  }
+
+  renderCaptured();
+}
+
+function renderCaptured() {
+  // مهره‌های گرفته‌شده = مقایسه با تخته اولیه
+  const initial = { P:8,N:2,B:2,R:2,Q:1,K:1, p:8,n:2,b:2,r:2,q:1,k:1 };
+  const current = {};
+  for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+    const p = board[r][c];
+    if (p) current[p] = (current[p]||0)+1;
+  }
+  let blackLost = '', whiteLost = '';
+  for (const k in initial) {
+    const diff = initial[k] - (current[k]||0);
+    if (diff > 0) {
+      const str = PIECES[k].repeat(diff);
+      if (k === k.toUpperCase()) whiteLost += str; else blackLost += str;
+    }
+  }
+  document.getElementById('capturedWhite').textContent = whiteLost;
+  document.getElementById('capturedBlack').textContent = blackLost;
+}
+
+function setStatus(text, cls) {
+  const el = document.getElementById('status');
+  el.textContent = text;
+  el.className = 'status ' + (cls || '');
+}
+
+// کلیک
+function onSquareClick(r,c) {
+  if (gameOver || aiThinking || turn !== 'w') return;
+
+  const p = board[r][c];
+
+  // اگه مهره خودم رو کلیک کردم
+  if (p && isWhite(p)) {
+    selected = [r,c];
+    legalMoves = pieceMoves(board, r, c, enPassant, castling).filter(m => {
+      const nb = applyMove(board, m);
+      return !isInCheck(nb, 'w');
+    });
+    render();
+    return;
+  }
+
+  // اگه خانه مقصد از حرکات مجاز بود
+  if (selected) {
+    const move = legalMoves.find(m => m.to[0]===r && m.to[1]===c);
+    if (move) {
+      makeMove(move);
+      return;
+    }
+  }
+
+  // پاک کردن انتخاب
+  selected = null;
+  legalMoves = [];
+  render();
+}
+
+function makeMove(move) {
+  const piece = board[move.from[0]][move.from[1]];
+
+  // ارتقای سرباز: پیش‌فرض وزیر
+  if (move.promo === undefined && piece.toLowerCase() === 'p') {
+    const promoRow = colorOf(piece) === 'w' ? 0 : 7;
+    if (move.to[0] === promoRow) move.promo = 'q';
+  }
+
+  // بروزرسانی حق قلعه
+  if (piece === 'K') { castling.wK = false; castling.wQ = false; }
+  if (piece === 'k') { castling.bK = false; castling.bQ = false; }
+  if (piece === 'R' && move.from[0] === 7 && move.from[1] === 0) castling.wQ = false;
+  if (piece === 'R' && move.from[0] === 7 && move.from[1] === 7) castling.wK = false;
+  if (piece === 'r' && move.from[0] === 0 && move.from[1] === 0) castling.bQ = false;
+  if (piece === 'r' && move.from[0] === 0 && move.from[1] === 7) castling.bK = false;
+
+  board = applyMove(board, move);
+
+  // آنپاسان
+  enPassant = move.double ? [(move.from[0]+move.to[0])/2, move.from[1]] : null;
+
+  history.push(move);
+  selected = null;
+  legalMoves = [];
+  turn = turn === 'w' ? 'b' : 'w';
+
+  render();
+
+  // بررسی پایان بازی
+  const moves = allLegalMoves(board, turn, enPassant, castling);
+  if (moves.length === 0) {
+    gameOver = true;
+    if (isInCheck(board, turn)) {
+      if (turn === 'w') setStatus('شاه مات! کامپیوتر برد 😢', 'checkmate');
+      else setStatus('شاه مات! شما بردید 🎉', 'win');
+    } else {
+      setStatus('پات! مساوی شد', '');
+    }
+    return;
+  }
+
+  if (isInCheck(board, turn)) {
+    setStatus(turn === 'w' ? 'شما در کیش هستید!' : 'کامپیوتر در کیش است', 'checkmate');
+  } else {
+    setStatus(turn === 'w' ? 'نوبت شماست (سفید)' : 'کامپیوتر داره فکر می‌کنه...', '');
+  }
+
+  // نوبت AI
+  if (turn === 'b') {
+    aiThinking = true;
+    setStatus('کامپیوتر داره فکر می‌کنه...', 'thinking');
+    setTimeout(() => {
+      const depth = parseInt(document.querySelector('.level-select .active').dataset.level) + 1;
+      const m = bestMove(depth);
+      if (m) makeMove(m);
+      aiThinking = false;
+    }, 150);
+  }
+}
+
+// برگردوندن حرکت
+function undo() {
+  if (aiThinking) return;
+  // دو حرکت برمی‌گردونیم (خودم + AI)
+  if (history.length < 2) return;
+
+  // بازسازی از ابتدا
+  const moves = history.slice(0, -2);
+  resetGame();
+  for (const m of moves) {
+    // اعمال ساده بدون انیمیشن AI
+    const piece = board[m.from[0]][m.from[1]];
+    if (piece === 'K') { castling.wK = false; castling.wQ = false; }
+    if (piece === 'k') { castling.bK = false; castling.bQ = false; }
+    board = applyMove(board, m)
