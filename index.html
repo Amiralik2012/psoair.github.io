@@ -3,693 +3,801 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>شطرنج با هوش مصنوعی</title>
+<title>مدیریت هزینه‌ها | Expense Tracker</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+  
+  :root {
+    --bg: #0a0a0f;
+    --surface: #14141c;
+    --surface2: #1c1c28;
+    --border: #2a2a3a;
+    --text: #e8e8f0;
+    --muted: #6b6b7d;
+    --accent: #ffc107;
+    --accent2: #ff9800;
+    --green: #00e676;
+    --red: #ff3b5c;
+    --blue: #2979ff;
+    --purple: #7c4dff;
+  }
+  
   body {
-    font-family: Tahoma, sans-serif;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    background: var(--bg);
+    color: var(--text);
     min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .app {
+    width: 100%;
+    max-width: 1200px;
+  }
+  
+  /* Header */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  h1 span { color: var(--accent); }
+  
+  .date-display {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  
+  /* Stats Grid */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--accent); }
+  
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 4px; height: 100%;
+    background: var(--accent);
+  }
+  .stat-card.green::before { background: var(--green); }
+  .stat-card.red::before { background: var(--red); }
+  .stat-card.blue::before { background: var(--blue); }
+  .stat-card.purple::before { background: var(--purple); }
+  
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .stat-value.green { color: var(--green); }
+  .stat-value.red { color: var(--red); }
+  .stat-value.blue { color: var(--blue); }
+  .stat-value.purple { color: var(--purple); }
+  
+  /* Main Layout */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 20px;
+  }
+  @media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; }
+  }
+  
+  /* Form */
+  .form-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    height: fit-content;
+    position: sticky;
+    top: 20px;
+  }
+  
+  .panel-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .type-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+  }
+  
+  .type-toggle button {
+    padding: 12px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .type-toggle button.active {
+    background: var(--accent);
+    color: #000;
+  }
+  .type-toggle button:first-child { border-left: 1px solid var(--border); }
+  
+  .field {
+    margin-bottom: 14px;
+  }
+  .field label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .field input,
+  .field select {
+    width: 100%;
+    padding: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .field input:focus,
+  .field select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  
+  .btn-submit {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+  .btn-submit:hover {
+    background: var(--accent2);
+    transform: translateY(-2px);
+  }
+  .btn-submit:active { transform: translateY(0); }
+  
+  /* Transactions */
+  .list-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+  }
+  
+  .list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .filter-btn {
+    padding: 8px 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .filter-btn.active {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+  }
+  
+  .search-box {
+    padding: 8px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.85rem;
+    font-family: inherit;
+    width: 180px;
+  }
+  .search-box:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  
+  .transaction-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+  .transaction-list::-webkit-scrollbar { width: 6px; }
+  .transaction-list::-webkit-scrollbar-track { background: var(--surface2); }
+  .transaction-list::-webkit-scrollbar-thumb { background: var(--border); }
+  
+  .transaction {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+    gap: 12px;
+    animation: slideIn 0.3s ease;
+  }
+  
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  
+  .transaction:hover {
+    border-color: var(--accent);
+    transform: translateX(-4px);
+  }
+  
+  .trans-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .trans-icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+  .trans-icon.income { background: rgba(0,230,118,0.15); }
+  .trans-icon.expense { background: rgba(255,59,92,0.15); }
+  
+  .trans-info { min-width: 0; }
+  .trans-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .trans-meta {
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    gap: 8px;
+  }
+  
+  .trans-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  
+  .trans-amount {
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: -0.5px;
+    direction: ltr;
+  }
+  .trans-amount.income { color: var(--green); }
+  .trans-amount.expense { color: var(--red); }
+  
+  .btn-delete {
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-delete:hover {
+    background: var(--red);
+    color: #fff;
+    border-color: var(--red);
+  }
+  
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+  
+  /* Chart */
+  .chart-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-top: 20px;
+  }
+  
+  .chart-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 180px;
+    padding: 20px 0;
+  }
+  
+  .bar-wrapper {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 20px;
-    color: #eee;
+    gap: 8px;
+    height: 100%;
+    justify-content: flex-end;
   }
-  h1 {
-    margin-bottom: 15px;
-    font-size: 1.8rem;
-    background: linear-gradient(90deg, #f0d9b5, #b58863);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  
+  .bar {
+    width: 100%;
+    max-width: 50px;
+    background: linear-gradient(180deg, var(--accent), var(--accent2));
+    transition: height 0.5s ease;
+    min-height: 2px;
   }
-  .container {
-    display: flex;
-    gap: 25px;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  #board {
-    display: grid;
-    grid-template-columns: repeat(8, 70px);
-    grid-template-rows: repeat(8, 70px);
-    border: 6px solid #4a3728;
-    border-radius: 8px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-    overflow: hidden;
-  }
-  .square {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 46px;
-    cursor: pointer;
-    user-select: none;
-    position: relative;
-    transition: background 0.15s;
-  }
-  .light { background: #f0d9b5; }
-  .dark  { background: #b58863; }
-  .square.selected { box-shadow: inset 0 0 0 4px #f7d51d; }
-  .square.legal::after {
-    content: '';
-    position: absolute;
-    width: 22px; height: 22px;
-    background: rgba(0,0,0,0.28);
-    border-radius: 50%;
-  }
-  .square.legal.capture::after {
-    width: 100%; height: 100%;
-    background: transparent;
-    border: 4px solid rgba(200,0,0,0.55);
-    border-radius: 50%;
-    box-sizing: border-box;
-  }
-  .square.last-move { background: rgba(247,213,29,0.45) !important; }
-  .square.check { background: radial-gradient(circle, #ff4444 0%, transparent 70%) !important; }
-  .piece { pointer-events: none; line-height: 1; }
-  .panel {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 12px;
-    padding: 20px;
-    min-width: 260px;
-    backdrop-filter: blur(10px);
-  }
-  .status {
-    font-size: 1.1rem;
-    margin-bottom: 15px;
-    padding: 12px;
-    border-radius: 8px;
-    background: rgba(0,0,0,0.3);
+  
+  .bar-label {
+    font-size: 0.7rem;
+    color: var(--muted);
     text-align: center;
-    min-height: 48px;
+  }
+  
+  .bar-value {
+    font-size: 0.7rem;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  
+  /* Actions */
+  .actions {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+    flex-wrap: wrap;
   }
-  .status.thinking { color: #f7d51d; }
-  .status.checkmate { color: #ff5555; font-weight: bold; }
-  .status.win { color: #55ff88; font-weight: bold; }
-  .controls { display: flex; flex-direction: column; gap: 10px; }
-  button {
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    font-size: 1rem;
-    cursor: pointer;
-    font-family: inherit;
-    transition: transform 0.15s, box-shadow 0.15s;
-  }
-  button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102,126,234,0.4); }
-  button:active { transform: translateY(0); }
-  button.danger { background: linear-gradient(135deg, #e74c3c, #c0392b); }
-  .level-select {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 12px;
-  }
-  .level-select button {
+  
+  .btn-action {
     flex: 1;
-    padding: 8px;
+    min-width: 120px;
+    padding: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    cursor: pointer;
     font-size: 0.85rem;
-    background: rgba(255,255,255,0.1);
+    font-weight: 600;
+    font-family: inherit;
+    transition: all 0.2s;
   }
-  .level-select button.active {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-  }
-  .info {
-    margin-top: 12px;
-    font-size: 0.85rem;
-    color: #aaa;
-    text-align: center;
-    line-height: 1.8;
-  }
-  .captured {
+  .btn-action:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-action.danger:hover { border-color: var(--red); color: var(--red); }
+  
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    padding: 14px 24px;
+    font-size: 0.9rem;
+    z-index: 999;
+    transition: transform 0.3s ease;
     display: flex;
-    flex-wrap: wrap;
-    gap: 2px;
-    min-height: 30px;
-    font-size: 24px;
-    margin: 8px 0;
-    padding: 6px;
-    background: rgba(0,0,0,0.2);
-    border-radius: 6px;
+    align-items: center;
+    gap: 10px;
   }
-  @media (max-width: 700px) {
-    #board {
-      grid-template-columns: repeat(8, 40px);
-      grid-template-rows: repeat(8, 40px);
-    }
-    .square { font-size: 26px; }
-    .square.legal::after { width: 14px; height: 14px; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  
+  @media (max-width: 600px) {
+    body { padding: 12px; }
+    h1 { font-size: 1.3rem; }
+    .stat-value { font-size: 1.2rem; }
+    .form-panel, .list-panel, .chart-panel { padding: 16px; }
+    .form-panel { position: static; }
+    .search-box { width: 100%; }
+    .list-header { flex-direction: column; align-items: stretch; }
   }
 </style>
 </head>
 <body>
 
-<h1>♟️ شطرنج با هوش مصنوعی</h1>
+<div class="app">
+  <header>
+    <h1>💰 مدیریت <span>هزینه‌ها</span></h1>
+    <div class="date-display" id="dateDisplay"></div>
+  </header>
 
-<div class="container">
-  <div id="board"></div>
+  <!-- آمار -->
+  <div class="stats">
+    <div class="stat-card green">
+      <div class="stat-label">کل درآمد</div>
+      <div class="stat-value green" id="totalIncome">۰</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">کل هزینه</div>
+      <div class="stat-value red" id="totalExpense">۰</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-label">موجودی</div>
+      <div class="stat-value blue" id="balance">۰</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-label">تعداد تراکنش</div>
+      <div class="stat-value purple" id="totalCount">۰</div>
+    </div>
+  </div>
 
-  <div class="panel">
-    <div class="status" id="status">نوبت شماست (سفید)</div>
+  <div class="main-grid">
+    <!-- فرم -->
+    <div class="form-panel">
+      <div class="panel-title">➕ تراکنش جدید</div>
 
-    <div class="level-select">
-      <button data-level="1">آسان</button>
-      <button data-level="2" class="active">متوسط</button>
-      <button data-level="3">سخت</button>
+      <div class="type-toggle">
+        <button id="btnExpense" class="active">💸 هزینه</button>
+        <button id="btnIncome">💵 درآمد</button>
+      </div>
+
+      <div class="field">
+        <label>عنوان</label>
+        <input type="text" id="title" placeholder="مثلاً: خرید نان" maxlength="50">
+      </div>
+
+      <div class="field">
+        <label>مبلغ (تومان)</label>
+        <input type="number" id="amount" placeholder="مثلاً: 50000" min="0">
+      </div>
+
+      <div class="field">
+        <label>دسته‌بندی</label>
+        <select id="category">
+          <option value="خوراک">🍔 خوراک</option>
+          <option value="حمل‌ونقل">🚗 حمل‌ونقل</option>
+          <option value="سرگرمی">🎮 سرگرمی</option>
+          <option value="خرید">🛍️ خرید</option>
+          <option value="قبض">📄 قبض</option>
+          <option value="درمان">💊 درمان</option>
+          <option value="حقوق">💼 حقوق</option>
+          <option value="سایر">📦 سایر</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>تاریخ</label>
+        <input type="date" id="date">
+      </div>
+
+      <button class="btn-submit" id="btnAdd">ثبت تراکنش</button>
+
+      <div class="actions">
+        <button class="btn-action" id="btnExport">📥 خروجی CSV</button>
+        <button class="btn-action danger" id="btnClear">🗑️ پاک کردن همه</button>
+      </div>
     </div>
 
-    <div class="captured" id="capturedBlack"></div>
-    <div class="captured" id="capturedWhite"></div>
+    <!-- لیست -->
+    <div class="list-panel">
+      <div class="list-header">
+        <div class="panel-title" style="border:none; margin:0; padding:0;">📋 تراکنش‌ها</div>
+        <input type="text" class="search-box" id="search" placeholder="🔍 جستجو...">
+      </div>
 
-    <div class="controls">
-      <button id="newGame">🔄 بازی جدید</button>
-      <button id="undo" class="danger">↩️ برگردوندن حرکت</button>
-    </div>
+      <div class="filters" style="margin-bottom:16px;">
+        <button class="filter-btn active" data-filter="all">همه</button>
+        <button class="filter-btn" data-filter="income">درآمد</button>
+        <button class="filter-btn" data-filter="expense">هزینه</button>
+      </div>
 
-    <div class="info">
-      حرکت با کلیک روی مهره و بعد مقصد<br>
-      مهره‌های سیاه = کامپیوتر
+      <div class="transaction-list" id="list"></div>
     </div>
+  </div>
+
+  <!-- نمودار -->
+  <div class="chart-panel">
+    <div class="panel-title">📊 هزینه بر اساس دسته‌بندی</div>
+    <div class="chart-container" id="chart"></div>
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
 /* ============================================================
-   موتور شطرنج کامل با هوش مصنوعی (Minimax + Alpha-Beta)
-   همه چیز در یک فایل
+   Expense Tracker - مدیریت هزینه‌ها
+   بدون دیتابیس - فقط localStorage
    ============================================================ */
 
-const PIECES = {
-  'K':'♔','Q':'♕','R':'♖','B':'♗','N':'♘','P':'♙',
-  'k':'♚','q':'♛','r':'♜','b':'♝','n':'♞','p':'♟'
-};
+const STORAGE_KEY = 'expense_tracker_data_v1';
+let transactions = [];
+let currentType = 'expense';
+let currentFilter = 'all';
+let searchQuery = '';
 
-const PIECE_VALUES = { p:100, n:320, b:330, r:500, q:900, k:20000 };
-
-// تخته اولیه
-function initialBoard() {
-  return [
-    ['r','n','b','q','k','b','n','r'],
-    ['p','p','p','p','p','p','p','p'],
-    [null,null,null,null,null,null,null,null],
-    [null,null,null,null,null,null,null,null],
-    [null,null,null,null,null,null,null,null],
-    [null,null,null,null,null,null,null,null],
-    ['P','P','P','P','P','P','P','P'],
-    ['R','N','B','Q','K','B','N','R']
-  ];
-}
-
-function isWhite(p) { return p && p === p.toUpperCase(); }
-function isBlack(p) { return p && p === p.toLowerCase(); }
-function colorOf(p) { return isWhite(p) ? 'w' : 'b'; }
-function inBounds(r,c) { return r>=0 && r<8 && c>=0 && c<8; }
-
-// وضعیت بازی
-let board, turn, selected, legalMoves, history, gameOver, enPassant, castling, aiThinking;
-
-function resetGame() {
-  board = initialBoard();
-  turn = 'w';
-  selected = null;
-  legalMoves = [];
-  history = [];
-  gameOver = false;
-  enPassant = null;
-  castling = { wK:true, wQ:true, bK:true, bQ:true };
-  aiThinking = false;
-  render();
-  setStatus('نوبت شماست (سفید)', '');
-}
-
-// پیدا کردن شاه
-function findKing(b, color) {
-  const target = color === 'w' ? 'K' : 'k';
-  for (let r=0;r<8;r++) for (let c=0;c<8;c++) if (b[r][c] === target) return [r,c];
-  return null;
-}
-
-// بررسی حمله به خانه
-function isAttacked(b, r, c, byColor) {
-  // سرباز
-  const dir = byColor === 'w' ? 1 : -1;
-  for (const dc of [-1,1]) {
-    const rr = r + dir, cc = c + dc;
-    if (inBounds(rr,cc)) {
-      const p = b[rr][cc];
-      if (p && colorOf(p) === byColor && p.toLowerCase() === 'p') return true;
-    }
+// بارگذاری از localStorage
+function loadData() {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    transactions = data ? JSON.parse(data) : [];
+  } catch(e) {
+    transactions = [];
   }
-  // اسب
-  const knightMoves = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
-  for (const [dr,dc] of knightMoves) {
-    const rr=r+dr, cc=c+dc;
-    if (inBounds(rr,cc)) {
-      const p = b[rr][cc];
-      if (p && colorOf(p) === byColor && p.toLowerCase() === 'n') return true;
-    }
-  }
-  // شاه
-  for (let dr=-1;dr<=1;dr++) for (let dc=-1;dc<=1;dc++) {
-    if (!dr && !dc) continue;
-    const rr=r+dr, cc=c+dc;
-    if (inBounds(rr,cc)) {
-      const p = b[rr][cc];
-      if (p && colorOf(p) === byColor && p.toLowerCase() === 'k') return true;
-    }
-  }
-  // اسلاید (رخ، فیل، وزیر)
-  const dirs = [
-    [-1,0,'r'],[1,0,'r'],[0,-1,'r'],[0,1,'r'],
-    [-1,-1,'b'],[-1,1,'b'],[1,-1,'b'],[1,1,'b']
-  ];
-  for (const [dr,dc,type] of dirs) {
-    let rr=r+dr, cc=c+dc;
-    while (inBounds(rr,cc)) {
-      const p = b[rr][cc];
-      if (p) {
-        if (colorOf(p) === byColor) {
-          const t = p.toLowerCase();
-          if (t === 'q' || t === type) return true;
-        }
-        break;
-      }
-      rr+=dr; cc+=dc;
-    }
-  }
-  return false;
 }
 
-function isInCheck(b, color) {
-  const k = findKing(b, color);
-  if (!k) return false;
-  return isAttacked(b, k[0], k[1], color === 'w' ? 'b' : 'w');
+// ذخیره در localStorage
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+  } catch(e) {
+    toast('⚠️ خطا در ذخیره‌سازی', 'error');
+  }
 }
 
-// تولید حرکات مهره
-function pieceMoves(b, r, c, ep, cast) {
-  const p = b[r][c];
-  if (!p) return [];
-  const color = colorOf(p);
-  const type = p.toLowerCase();
-  const moves = [];
-  const enemy = color === 'w' ? 'b' : 'w';
+// تبدیل اعداد به فارسی
+function toFa(num) {
+  const fa = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+  return String(Math.round(num)).replace(/\d/g, d => fa[d]);
+}
 
-  const add = (rr,cc, extra={}) => {
-    if (!inBounds(rr,cc)) return false;
-    const target = b[rr][cc];
-    if (target && colorOf(target) === color) return false;
-    moves.push({ from:[r,c], to:[rr,cc], ...extra });
-    return !target;
+// فرمت مبلغ
+function formatMoney(n) {
+  const abs = Math.abs(n);
+  let formatted = abs.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return toFa(formatted) + ' تومان';
+}
+
+// تاریخ امروز
+function todayISO() {
+  return new Date().toISOString().split('T')[0];
+}
+
+// تاریخ به فارسی
+function formatDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return toFa(y) + '/' + toFa(m) + '/' + toFa(d);
+}
+
+// نمایش toast
+let toastTimer;
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.borderColor = type === 'error' ? 'var(--red)' : type === 'success' ? 'var(--green)' : 'var(--accent)';
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// رندر همه چیز
+function render() {
+  renderStats();
+  renderList();
+  renderChart();
+}
+
+// آمار
+function renderStats() {
+  const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+  const balance = income - expense;
+
+  document.getElementById('totalIncome').textContent = formatMoney(income);
+  document.getElementById('totalExpense').textContent = formatMoney(expense);
+  document.getElementById('balance').textContent = formatMoney(balance);
+  document.getElementById('balance').style.color = balance >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('totalCount').textContent = toFa(transactions.length);
+}
+
+// لیست
+function renderList() {
+  const list = document.getElementById('list');
+  let filtered = transactions.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.id - a.id);
+
+  if (currentFilter === 'income') filtered = filtered.filter(t => t.type === 'income');
+  if (currentFilter === 'expense') filtered = filtered.filter(t => t.type === 'expense');
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(t => t.title.toLowerCase().includes(q) || t.category.includes(q));
+  }
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty">
+      <div class="empty-icon">📭</div>
+      <div>${searchQuery || currentFilter !== 'all' ? 'نتیجه‌ای یافت نشد' : 'هنوز تراکنشی ثبت نشده'}</div>
+    </div>`;
+    return;
+  }
+
+  const catIcons = {
+    'خوراک':'🍔','حمل‌ونقل':'🚗','سرگرمی':'🎮','خرید':'🛍️',
+    'قبض':'📄','درمان':'💊','حقوق':'💼','سایر':'📦'
   };
 
-  if (type === 'p') {
-    const dir = color === 'w' ? -1 : 1;
-    const startRow = color === 'w' ? 6 : 1;
-    const promoRow = color === 'w' ? 0 : 7;
+  list.innerHTML = filtered.map(t => `
+    <div class="transaction">
+      <div class="trans-left">
+        <div class="trans-icon ${t.type}">${catIcons[t.category] || '📦'}</div>
+        <div class="trans-info">
+          <div class="trans-title">${escapeHtml(t.title)}</div>
+          <div class="trans-meta">
+            <span>${t.category}</span>
+            <span>•</span>
+            <span>${formatDate(t.date)}</span>
+          </div>
+        </div>
+      </div>
+      <div class="trans-right">
+        <div class="trans-amount ${t.type}">
+          ${t.type === 'income' ? '+' : '−'} ${formatMoney(t.amount)}
+        </div>
+        <button class="btn-delete" data-id="${t.id}" title="حذف">✕</button>
+      </div>
+    </div>
+  `).join('');
 
-    // یک خانه جلو
-    if (inBounds(r+dir,c) && !b[r+dir][c]) {
-      if (r+dir === promoRow) {
-        for (const pr of ['q','r','b','n']) moves.push({ from:[r,c], to:[r+dir,c], promo: pr });
-      } else {
-        moves.push({ from:[r,c], to:[r+dir,c] });
-      }
-      // دو خانه
-      if (r === startRow && !b[r+2*dir][c]) {
-        moves.push({ from:[r,c], to:[r+2*dir,c], double: true });
-      }
-    }
-    // گرفتن
-    for (const dc of [-1,1]) {
-      const rr=r+dir, cc=c+dc;
-      if (!inBounds(rr,cc)) continue;
-      const target = b[rr][cc];
-      if (target && colorOf(target) === enemy) {
-        if (rr === promoRow) {
-          for (const pr of ['q','r','b','n']) moves.push({ from:[r,c], to:[rr,cc], promo: pr });
-        } else {
-          moves.push({ from:[r,c], to:[rr,cc] });
-        }
-      } else if (!target && ep && ep[0] === rr && ep[1] === cc) {
-        moves.push({ from:[r,c], to:[rr,cc], enPassant: true });
-      }
-    }
-  } else if (type === 'n') {
-    const km = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
-    for (const [dr,dc] of km) add(r+dr, c+dc);
-  } else if (type === 'k') {
-    for (let dr=-1;dr<=1;dr++) for (let dc=-1;dc<=1;dc++) {
-      if (!dr && !dc) continue;
-      add(r+dr, c+dc);
-    }
-    // قلعه
-    if (cast) {
-      const homeRow = color === 'w' ? 7 : 0;
-      if (r === homeRow && c === 4) {
-        // قلعه کوتاه
-        const canK = color === 'w' ? cast.wK : cast.bK;
-        if (canK && !b[homeRow][5] && !b[homeRow][6] && b[homeRow][7] && b[homeRow][7].toLowerCase() === 'r') {
-          if (!isAttacked(b, homeRow, 4, enemy) && !isAttacked(b, homeRow, 5, enemy) && !isAttacked(b, homeRow, 6, enemy)) {
-            moves.push({ from:[r,c], to:[homeRow,6], castle: 'K' });
-          }
-        }
-        // قلعه بلند
-        const canQ = color === 'w' ? cast.wQ : cast.bQ;
-        if (canQ && !b[homeRow][3] && !b[homeRow][2] && !b[homeRow][1] && b[homeRow][0] && b[homeRow][0].toLowerCase() === 'r') {
-          if (!isAttacked(b, homeRow, 4, enemy) && !isAttacked(b, homeRow, 3, enemy) && !isAttacked(b, homeRow, 2, enemy)) {
-            moves.push({ from:[r,c], to:[homeRow,2], castle: 'Q' });
-          }
-        }
-      }
-    }
-  } else {
-    let dirs = [];
-    if (type === 'r') dirs = [[-1,0],[1,0],[0,-1],[0,1]];
-    if (type === 'b') dirs = [[-1,-1],[-1,1],[1,-1],[1,1]];
-    if (type === 'q') dirs = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
-    for (const [dr,dc] of dirs) {
-      let rr=r+dr, cc=c+dc;
-      while (add(rr,cc)) { rr+=dr; cc+=dc; }
-    }
-  }
-  return moves;
+  // دکمه‌های حذف
+  list.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', () => deleteTransaction(parseInt(btn.dataset.id)));
+  });
 }
 
-// همه حرکات مجاز برای یک رنگ (با بررسی کیش)
-function allLegalMoves(b, color, ep, cast) {
-  const moves = [];
-  for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
-    const p = b[r][c];
-    if (p && colorOf(p) === color) {
-      const pm = pieceMoves(b, r, c, ep, cast);
-      for (const m of pm) {
-        const nb = applyMove(b, m);
-        if (!isInCheck(nb, color)) moves.push(m);
-      }
-    }
-  }
-  return moves;
+// escape HTML
+function escapeHtml(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
 }
 
-// اعمال حرکت روی تخته (کپی)
-function applyMove(b, move) {
-  const nb = b.map(row => row.slice());
-  const [fr,fc] = move.from;
-  const [tr,tc] = move.to;
-  const piece = nb[fr][fc];
-  nb[tr][tc] = piece;
-  nb[fr][fc] = null;
-  // آنپاسان
-  if (move.enPassant) {
-    const capRow = colorOf(piece) === 'w' ? tr+1 : tr-1;
-    nb[capRow][tc] = null;
-  }
-  // ارتقا
-  if (move.promo) {
-    nb[tr][tc] = colorOf(piece) === 'w' ? move.promo.toUpperCase() : move.promo;
-  }
-  // قلعه
-  if (move.castle === 'K') {
-    const row = tr;
-    nb[row][5] = nb[row][7];
-    nb[row][7] = null;
-  } else if (move.castle === 'Q') {
-    const row = tr;
-    nb[row][3] = nb[row][0];
-    nb[row][0] = null;
-  }
-  return nb;
-}
-
-// ارزیابی موقعیت
-function evaluate(b) {
-  let score = 0;
-  for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
-    const p = b[r][c];
-    if (!p) continue;
-    const v = PIECE_VALUES[p.toLowerCase()];
-    // پاداش مرکز
-    const centerBonus = (3.5 - Math.abs(r-3.5)) + (3.5 - Math.abs(c-3.5));
-    const posBonus = centerBonus * 2;
-    if (isWhite(p)) score += v + posBonus;
-    else score -= v + posBonus;
-  }
-  return score;
-}
-
-// Minimax با Alpha-Beta
-function minimax(b, depth, alpha, beta, maximizing, ep, cast) {
-  if (depth === 0) return evaluate(b);
-
-  const color = maximizing ? 'w' : 'b';
-  const moves = allLegalMoves(b, color, ep, cast);
-
-  if (moves.length === 0) {
-    if (isInCheck(b, color)) return maximizing ? -99999 : 99999;
-    return 0;
-  }
-
-  if (maximizing) {
-    let best = -Infinity;
-    for (const m of moves) {
-      const nb = applyMove(b, m);
-      // شبیه‌سازی ساده قلعه/آنپاسان برای هوش مصنوعی
-      const newEp = m.double ? [(m.from[0]+m.to[0])/2, m.from[1]] : null;
-      const val = minimax(nb, depth-1, alpha, beta, false, newEp, cast);
-      if (val > best) best = val;
-      if (val > alpha) alpha = val;
-      if (beta <= alpha) break;
-    }
-    return best;
-  } else {
-    let best = Infinity;
-    for (const m of moves) {
-      const nb = applyMove(b, m);
-      const newEp = m.double ? [(m.from[0]+m.to[0])/2, m.from[1]] : null;
-      const val = minimax(nb, depth-1, alpha, beta, true, newEp, cast);
-      if (val < best) best = val;
-      if (val < beta) beta = val;
-      if (beta <= alpha) break;
-    }
-    return best;
-  }
-}
-
-// انتخاب بهترین حرکت برای AI
-function bestMove(depth) {
-  const color = 'b';
-  const moves = allLegalMoves(board, color, enPassant, castling);
-  if (moves.length === 0) return null;
-
-  let best = null;
-  let bestVal = Infinity;
-  let alpha = -Infinity, beta = Infinity;
-
-  // ترتیب: اول گرفتن‌ها
-  moves.sort((a,b) => {
-    const ca = board[a.to[0]][a.to[1]] ? 1 : 0;
-    const cb = board[b.to[0]][b.to[1]] ? 1 : 0;
-    return cb - ca;
+// نمودار
+function renderChart() {
+  const chart = document.getElementById('chart');
+  const catTotals = {};
+  transactions.filter(t => t.type === 'expense').forEach(t => {
+    catTotals[t.category] = (catTotals[t.category] || 0) + t.amount;
   });
 
-  for (const m of moves) {
-    const nb = applyMove(board, m);
-    const newEp = m.double ? [(m.from[0]+m.to[0])/2, m.from[1]] : null;
-    const val = minimax(nb, depth-1, alpha, beta, true, newEp, castling);
-    if (val < bestVal) { bestVal = val; best = m; }
-    if (val < beta) beta = val;
-  }
-  return best;
-}
+  const entries = Object.entries(catTotals).sort((a, b) => b[1] - a[1]).slice(0, 7);
 
-// رندر
-const boardEl = document.getElementById('board');
-
-function render() {
-  boardEl.innerHTML = '';
-  const kingInCheck = isInCheck(board, turn) ? findKing(board, turn) : null;
-
-  for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
-    const sq = document.createElement('div');
-    sq.className = 'square ' + ((r+c)%2 === 0 ? 'light' : 'dark');
-    sq.dataset.r = r; sq.dataset.c = c;
-
-    if (selected && selected[0]===r && selected[1]===c) sq.classList.add('selected');
-
-    const lm = legalMoves.find(m => m.to[0]===r && m.to[1]===c);
-    if (lm) {
-      sq.classList.add('legal');
-      if (board[r][c] || lm.enPassant) sq.classList.add('capture');
-    }
-
-    // آخرین حرکت
-    if (history.length) {
-      const last = history[history.length-1];
-      if ((last.from[0]===r && last.from[1]===c) || (last.to[0]===r && last.to[1]===c)) {
-        sq.classList.add('last-move');
-      }
-    }
-
-    if (kingInCheck && kingInCheck[0]===r && kingInCheck[1]===c) sq.classList.add('check');
-
-    const p = board[r][c];
-    if (p) {
-      const span = document.createElement('span');
-      span.className = 'piece';
-      span.textContent = PIECES[p];
-      span.style.color = isWhite(p) ? '#fff' : '#111';
-      span.style.textShadow = isWhite(p) ? '0 0 2px #000' : '0 0 2px #fff';
-      sq.appendChild(span);
-    }
-
-    sq.addEventListener('click', () => onSquareClick(r,c));
-    boardEl.appendChild(sq);
-  }
-
-  renderCaptured();
-}
-
-function renderCaptured() {
-  // مهره‌های گرفته‌شده = مقایسه با تخته اولیه
-  const initial = { P:8,N:2,B:2,R:2,Q:1,K:1, p:8,n:2,b:2,r:2,q:1,k:1 };
-  const current = {};
-  for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
-    const p = board[r][c];
-    if (p) current[p] = (current[p]||0)+1;
-  }
-  let blackLost = '', whiteLost = '';
-  for (const k in initial) {
-    const diff = initial[k] - (current[k]||0);
-    if (diff > 0) {
-      const str = PIECES[k].repeat(diff);
-      if (k === k.toUpperCase()) whiteLost += str; else blackLost += str;
-    }
-  }
-  document.getElementById('capturedWhite').textContent = whiteLost;
-  document.getElementById('capturedBlack').textContent = blackLost;
-}
-
-function setStatus(text, cls) {
-  const el = document.getElementById('status');
-  el.textContent = text;
-  el.className = 'status ' + (cls || '');
-}
-
-// کلیک
-function onSquareClick(r,c) {
-  if (gameOver || aiThinking || turn !== 'w') return;
-
-  const p = board[r][c];
-
-  // اگه مهره خودم رو کلیک کردم
-  if (p && isWhite(p)) {
-    selected = [r,c];
-    legalMoves = pieceMoves(board, r, c, enPassant, castling).filter(m => {
-      const nb = applyMove(board, m);
-      return !isInCheck(nb, 'w');
-    });
-    render();
+  if (entries.length === 0) {
+    chart.innerHTML = '<div style="width:100%; text-align:center; color:var(--muted); padding:40px;">داده‌ای برای نمایش وجود ندارد</div>';
     return;
   }
 
-  // اگه خانه مقصد از حرکات مجاز بود
-  if (selected) {
-    const move = legalMoves.find(m => m.to[0]===r && m.to[1]===c);
-    if (move) {
-      makeMove(move);
-      return;
-    }
-  }
+  const max = Math.max(...entries.map(e => e[1]));
 
-  // پاک کردن انتخاب
-  selected = null;
-  legalMoves = [];
-  render();
+  chart.innerHTML = entries.map(([cat, val]) => {
+    const pct = (val / max) * 100;
+    return `
+      <div class="bar-wrapper">
+        <div class="bar-value">${toFa((val/1000).toFixed(0))}K</div>
+        <div class="bar" style="height:${pct}%"></div>
+        <div class="bar-label">${cat}</div>
+      </div>
+    `;
+  }).join('');
 }
 
-function makeMove(move) {
-  const piece = board[move.from[0]][move.from[1]];
+// افزودن
+function addTransaction() {
+  const title = document.getElementById('title').value.trim();
+  const amount = parseFloat(document.getElementById('amount').value);
+  const category = document.getElementById('category').value;
+  const date = document.getElementById('date').value || todayISO();
 
-  // ارتقای سرباز: پیش‌فرض وزیر
-  if (move.promo === undefined && piece.toLowerCase() === 'p') {
-    const promoRow = colorOf(piece) === 'w' ? 0 : 7;
-    if (move.to[0] === promoRow) move.promo = 'q';
-  }
+  if (!title) { toast('❌ عنوان را وارد کنید', 'error'); return; }
+  if (!amount || amount <= 0) { toast('❌ مبلغ معتبر وارد کنید', 'error'); return; }
 
-  // بروزرسانی حق قلعه
-  if (piece === 'K') { castling.wK = false; castling.wQ = false; }
-  if (piece === 'k') { castling.bK = false; castling.bQ = false; }
-  if (piece === 'R' && move.from[0] === 7 && move.from[1] === 0) castling.wQ = false;
-  if (piece === 'R' && move.from[0] === 7 && move.from[1] === 7) castling.wK = false;
-  if (piece === 'r' && move.from[0] === 0 && move.from[1] === 0) castling.bQ = false;
-  if (piece === 'r' && move.from[0] === 0 && move.from[1] === 7) castling.bK = false;
+  transactions.push({
+    id: Date.now(),
+    type: currentType,
+    title,
+    amount,
+    category,
+    date
+  });
 
-  board = applyMove(board, move);
-
-  // آنپاسان
-  enPassant = move.double ? [(move.from[0]+move.to[0])/2, move.from[1]] : null;
-
-  history.push(move);
-  selected = null;
-  legalMoves = [];
-  turn = turn === 'w' ? 'b' : 'w';
-
+  saveData();
   render();
 
-  // بررسی پایان بازی
-  const moves = allLegalMoves(board, turn, enPassant, castling);
-  if (moves.length === 0) {
-    gameOver = true;
-    if (isInCheck(board, turn)) {
-      if (turn === 'w') setStatus('شاه مات! کامپیوتر برد 😢', 'checkmate');
-      else setStatus('شاه مات! شما بردید 🎉', 'win');
-    } else {
-      setStatus('پات! مساوی شد', '');
-    }
-    return;
-  }
+  // پاک کردن فرم
+  document.getElementById('title').value = '';
+  document.getElementById('amount').value = '';
+  document.getElementById('title').focus();
 
-  if (isInCheck(board, turn)) {
-    setStatus(turn === 'w' ? 'شما در کیش هستید!' : 'کامپیوتر در کیش است', 'checkmate');
-  } else {
-    setStatus(turn === 'w' ? 'نوبت شماست (سفید)' : 'کامپیوتر داره فکر می‌کنه...', '');
-  }
-
-  // نوبت AI
-  if (turn === 'b') {
-    aiThinking = true;
-    setStatus('کامپیوتر داره فکر می‌کنه...', 'thinking');
-    setTimeout(() => {
-      const depth = parseInt(document.querySelector('.level-select .active').dataset.level) + 1;
-      const m = bestMove(depth);
-      if (m) makeMove(m);
-      aiThinking = false;
-    }, 150);
-  }
+  toast('✅ تراکنش ثبت شد', 'success');
 }
 
-// برگردوندن حرکت
-function undo() {
-  if (aiThinking) return;
-  // دو حرکت برمی‌گردونیم (خودم + AI)
-  if (history.length < 2) return;
+// حذف
+function deleteTransaction(id) {
+  transactions = transactions.filter(t => t.id !== id);
+  saveData();
+  render();
+  toast('🗑️ حذف شد');
+}
 
-  // بازسازی از ابتدا
-  const moves = history.slice(0, -2);
-  resetGame();
-  for (const m of moves) {
-    // اعمال ساده بدون انیمیشن AI
-    const piece = board[m.from[0]][m.from[1]];
-    if (piece === 'K') { castling.wK = false; castling.wQ = false; }
-    if (piece === 'k') { castling.bK = false; castling.bQ = false; }
-    board = applyMove(board, m)
+// خروجی CSV
+function exportCSV() {
+  if (transactions.length === 0) { toast('❌ داده‌ای برای خروجی وجود ندارد', 'error'); return; }
+
+  let csv = '\uFEFF'; // BOM برای Excel فارسی
+  csv += 'نوع,عنوان,مبلغ,دسته‌بندی,تاریخ\n';
+  transactions.forEach(t => {
+    csv += `${t.type === 'income' ? 'درآمد' : 'هزینه'},${t.title},${t.amount},${t.category},${t.date}\n`;
+  });
+
+  const blob = 
